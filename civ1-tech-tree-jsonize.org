@@ -1,0 +1,729 @@
+(Source: http://civilization.wikia.com/wiki/List_of_technologies_(Civ1))
+
+#+NAME: civ1-tech-tree
+| Advance             | Requires                        | Leads to                                                |
+|---------------------+---------------------------------+---------------------------------------------------------|
+| Advanced Flight     | Flight, Electricity             | Rocketry                                                |
+| Alphabet            |                                 | Code of Laws, Map Making, Mathematics, Writing          |
+| Astronomy           | Mysticism, Mathematics          | Navigation, Theory of Gravity                           |
+| Atomic Theory       | Theory of Gravity, Physics      | Nuclear Fission                                         |
+| Automobile          | Combustion, Steel               | Mass Production                                         |
+| Banking             | Trade, Republic                 | Industrialization, Corporation                          |
+| Bridge Building     | Iron Working, Construction      | Railroad                                                |
+| Bronze Working      |                                 | Currency, Iron Working                                  |
+| Ceremonial Burial   |                                 | Monarchy, Mysticism                                     |
+| Chemistry           | University, Medicine            | Refining, Nuclear Power                                 |
+| Chivalry            | Feudalism, Horseback Riding     |                                                         |
+| Code of Laws        | Alphabet                        | Monarchy, Trade, Literacy, Republic                     |
+| Combustion          | Refining, Explosives            | Flight, Automobile                                      |
+| Communism           | Philosophy, Industrialization   | Labor Union                                             |
+| Computers           | Mathematics, Electronics        | Space Flight, Robotics                                  |
+| Conscription        | Republic, Explosives            |                                                         |
+| Construction        | Masonry, Currency               | Engineering, Bridge Building                            |
+| Corporation         | Banking, Industrialization      | Mass Production, Genetic Engineering, Refining          |
+| Currency            | Bronze Working                  | Trade, Construction                                     |
+| Democracy           | Philosophy, Literacy            | Recycling                                               |
+| Electricity         | Magnetism, Metallurgy           | Electronics, Advanced Flight                            |
+| Electronics         | Electricity, Engineering        | Computers, Rocketry, Nuclear Power                      |
+| Engineering         | The Wheel, Construction         | Electronics, Invention                                  |
+| Explosives          | Gunpowder, Chemistry            | Combustion, Conscription                                |
+| Feudalism           | Masonry, Monarchy               | Chivalry                                                |
+| Flight              | Combustion, Physics             | Advanced Flight                                         |
+| Fusion Power        | Nuclear Power, Superconductor   | Future Tech                                             |
+| Future Tech         | Fusion Power                    | More Future Tech                                        |
+| Genetic Engineering | Medicine, Corporation           |                                                         |
+| Gunpowder           | Invention, Iron Working         | Metallurgy, Explosives                                  |
+| Horseback Riding    |                                 | Chivalry                                                |
+| Industrialization   | Railroad, Banking               | Steel, Corporation, Communism                           |
+| Invention           | Engineering, Literacy           | Steam Engine, Gunpowder                                 |
+| Iron Working        | Bronze Working                  | Bridge Building, Gunpowder                              |
+| Labor Union         | Mass Production, Communism      |                                                         |
+| Literacy            | Writing, Code of Laws           | Democracy, Invention, Philosophy, Republic              |
+| Magnetism           | Navigation, Physics             | Electricity                                             |
+| Map Making          | Alphabet                        | Navigation                                              |
+| Masonry             |                                 | Mathematics, Feudalism, Construction                    |
+| Mass Production     | Automobile, Corporation         | Nuclear Fission, Superconductor, Recycling, Labor Union |
+| Mathematics         | Alphabet, Masonry               | Astronomy, Physics, University, Computers               |
+| Medicine            | Philosophy, Trade               | Chemistry, Genetic Engineering                          |
+| Metallurgy          | Gunpowder, University           | Steel, Electricity                                      |
+| Monarchy            | Ceremonial Burial, Code of Laws | Feudalism                                               |
+| Mysticism           | Ceremonial Burial               | Astronomy, Philosophy                                   |
+| Navigation          | Map Making, Astronomy           | Physics, Magnetism                                      |
+| Nuclear Fission     | Mass Production, Atomic Theory  | Nuclear Power                                           |
+| Nuclear Power       | Nuclear Fission, Electronics    | Fusion Power                                            |
+| Philosophy          | Mysticism, Literacy             | Medicine, Democracy, University, Religion, Communism    |
+| Physics             | Mathematics, Navigation         | Atomic Theory, Magnetism, Steam Engine, Flight          |
+| Plastics            | Refining, Space Flight          | Superconductor, Robotics                                |
+| Pottery             |                                 |                                                         |
+| Railroad            | Steam Engine, Bridge Building   | Industrialization                                       |
+| Recycling           | Mass Production, Democracy      |                                                         |
+| Refining            | Chemistry, Corporation          | Combustion, Plastics                                    |
+| Religion            | Philosophy, Writing             |                                                         |
+| Republic            | Code of Laws, Literacy          | Banking, Conscription                                   |
+| Robotics            | Plastics, Computers             |                                                         |
+| Rocketry            | Advanced Flight, Electronics    | Space Flight                                            |
+| Space Flight        | Computers, Rocketry             | Plastics                                                |
+| Steam Engine        | Physics, Invention              | Railroad                                                |
+| Steel               | Metallurgy, Industrialization   | Automobile                                              |
+| Superconductor      | Plastics, Mass Production       | Fusion Power                                            |
+| Theory of Gravity   | Astronomy, University           | Atomic Theory                                           |
+| Trade               | Currency, Code of Laws          | Medicine, Banking                                       |
+| University          | Mathematics, Philosophy         | Chemistry, Metallurgy, Theory of Gravity                |
+| The Wheel           |                                 | Engineering                                             |
+| Writing             | Alphabet                        | Religion, Literacy                                      |
+
+#+NAME: jsonize
+#+BEGIN_SRC emacs-lisp :var tbl=civ1-tech-tree
+  ;; org-babel-suppress-evaluation-prompt
+  (let* ((table-content (cddr tbl))
+         (child-mappings nil)
+         (formatted-json ""))
+    (dolist (row table-content)
+      (cl-destructuring-bind (advance requires provides) row
+        ;; split parent and child advance names by comma
+        (dolist (sym '(requires provides))
+          (let ((str (symbol-value sym)))
+            (setf (symbol-value sym)
+                  (split-string str "," t " "))))
+        ;; insert advance record into child-mappings
+        (setf child-mappings
+              (append child-mappings (list (list advance :requires requires
+                                                         :provides provides))))))
+    (with-temp-buffer
+      (insert (json-encode-alist child-mappings))
+      (json-pretty-print (point-min) (point-max))
+      (setf formatted-json
+            (buffer-substring-no-properties (point-min) (point-max))))
+    formatted-json)
+#+END_SRC
+
+#+RESULTS: jsonize
+#+begin_example
+{
+  "Writing": {
+    "provides": [
+      "Religion",
+      "Literacy"
+    ],
+    "requires": [
+      "Alphabet"
+    ]
+  },
+  "The Wheel": {
+    "provides": [
+      "Engineering"
+    ],
+    "requires": null
+  },
+  "University": {
+    "provides": [
+      "Chemistry",
+      "Metallurgy",
+      "Theory of Gravity"
+    ],
+    "requires": [
+      "Mathematics",
+      "Philosophy"
+    ]
+  },
+  "Trade": {
+    "provides": [
+      "Medicine",
+      "Banking"
+    ],
+    "requires": [
+      "Currency",
+      "Code of Laws"
+    ]
+  },
+  "Theory of Gravity": {
+    "provides": [
+      "Atomic Theory"
+    ],
+    "requires": [
+      "Astronomy",
+      "University"
+    ]
+  },
+  "Superconductor": {
+    "provides": [
+      "Fusion Power"
+    ],
+    "requires": [
+      "Plastics",
+      "Mass Production"
+    ]
+  },
+  "Steel": {
+    "provides": [
+      "Automobile"
+    ],
+    "requires": [
+      "Metallurgy",
+      "Industrialization"
+    ]
+  },
+  "Steam Engine": {
+    "provides": [
+      "Railroad"
+    ],
+    "requires": [
+      "Physics",
+      "Invention"
+    ]
+  },
+  "Space Flight": {
+    "provides": [
+      "Plastics"
+    ],
+    "requires": [
+      "Computers",
+      "Rocketry"
+    ]
+  },
+  "Rocketry": {
+    "provides": [
+      "Space Flight"
+    ],
+    "requires": [
+      "Advanced Flight",
+      "Electronics"
+    ]
+  },
+  "Robotics": {
+    "provides": null,
+    "requires": [
+      "Plastics",
+      "Computers"
+    ]
+  },
+  "Republic": {
+    "provides": [
+      "Banking",
+      "Conscription"
+    ],
+    "requires": [
+      "Code of Laws",
+      "Literacy"
+    ]
+  },
+  "Religion": {
+    "provides": null,
+    "requires": [
+      "Philosophy",
+      "Writing"
+    ]
+  },
+  "Refining": {
+    "provides": [
+      "Combustion",
+      "Plastics"
+    ],
+    "requires": [
+      "Chemistry",
+      "Corporation"
+    ]
+  },
+  "Recycling": {
+    "provides": null,
+    "requires": [
+      "Mass Production",
+      "Democracy"
+    ]
+  },
+  "Railroad": {
+    "provides": [
+      "Industrialization"
+    ],
+    "requires": [
+      "Steam Engine",
+      "Bridge Building"
+    ]
+  },
+  "Pottery": {
+    "provides": null,
+    "requires": null
+  },
+  "Plastics": {
+    "provides": [
+      "Superconductor",
+      "Robotics"
+    ],
+    "requires": [
+      "Refining",
+      "Space Flight"
+    ]
+  },
+  "Physics": {
+    "provides": [
+      "Atomic Theory",
+      "Magnetism",
+      "Steam Engine",
+      "Flight"
+    ],
+    "requires": [
+      "Mathematics",
+      "Navigation"
+    ]
+  },
+  "Philosophy": {
+    "provides": [
+      "Medicine",
+      "Democracy",
+      "University",
+      "Religion",
+      "Communism"
+    ],
+    "requires": [
+      "Mysticism",
+      "Literacy"
+    ]
+  },
+  "Nuclear Power": {
+    "provides": [
+      "Fusion Power"
+    ],
+    "requires": [
+      "Nuclear Fission",
+      "Electronics"
+    ]
+  },
+  "Nuclear Fission": {
+    "provides": [
+      "Nuclear Power"
+    ],
+    "requires": [
+      "Mass Production",
+      "Atomic Theory"
+    ]
+  },
+  "Navigation": {
+    "provides": [
+      "Physics",
+      "Magnetism"
+    ],
+    "requires": [
+      "Map Making",
+      "Astronomy"
+    ]
+  },
+  "Mysticism": {
+    "provides": [
+      "Astronomy",
+      "Philosophy"
+    ],
+    "requires": [
+      "Ceremonial Burial"
+    ]
+  },
+  "Monarchy": {
+    "provides": [
+      "Feudalism"
+    ],
+    "requires": [
+      "Ceremonial Burial",
+      "Code of Laws"
+    ]
+  },
+  "Metallurgy": {
+    "provides": [
+      "Steel",
+      "Electricity"
+    ],
+    "requires": [
+      "Gunpowder",
+      "University"
+    ]
+  },
+  "Medicine": {
+    "provides": [
+      "Chemistry",
+      "Genetic Engineering"
+    ],
+    "requires": [
+      "Philosophy",
+      "Trade"
+    ]
+  },
+  "Mathematics": {
+    "provides": [
+      "Astronomy",
+      "Physics",
+      "University",
+      "Computers"
+    ],
+    "requires": [
+      "Alphabet",
+      "Masonry"
+    ]
+  },
+  "Mass Production": {
+    "provides": [
+      "Nuclear Fission",
+      "Superconductor",
+      "Recycling",
+      "Labor Union"
+    ],
+    "requires": [
+      "Automobile",
+      "Corporation"
+    ]
+  },
+  "Masonry": {
+    "provides": [
+      "Mathematics",
+      "Feudalism",
+      "Construction"
+    ],
+    "requires": null
+  },
+  "Map Making": {
+    "provides": [
+      "Navigation"
+    ],
+    "requires": [
+      "Alphabet"
+    ]
+  },
+  "Magnetism": {
+    "provides": [
+      "Electricity"
+    ],
+    "requires": [
+      "Navigation",
+      "Physics"
+    ]
+  },
+  "Literacy": {
+    "provides": [
+      "Democracy",
+      "Invention",
+      "Philosophy",
+      "Republic"
+    ],
+    "requires": [
+      "Writing",
+      "Code of Laws"
+    ]
+  },
+  "Labor Union": {
+    "provides": null,
+    "requires": [
+      "Mass Production",
+      "Communism"
+    ]
+  },
+  "Iron Working": {
+    "provides": [
+      "Bridge Building",
+      "Gunpowder"
+    ],
+    "requires": [
+      "Bronze Working"
+    ]
+  },
+  "Invention": {
+    "provides": [
+      "Steam Engine",
+      "Gunpowder"
+    ],
+    "requires": [
+      "Engineering",
+      "Literacy"
+    ]
+  },
+  "Industrialization": {
+    "provides": [
+      "Steel",
+      "Corporation",
+      "Communism"
+    ],
+    "requires": [
+      "Railroad",
+      "Banking"
+    ]
+  },
+  "Horseback Riding": {
+    "provides": [
+      "Chivalry"
+    ],
+    "requires": null
+  },
+  "Gunpowder": {
+    "provides": [
+      "Metallurgy",
+      "Explosives"
+    ],
+    "requires": [
+      "Invention",
+      "Iron Working"
+    ]
+  },
+  "Genetic Engineering": {
+    "provides": null,
+    "requires": [
+      "Medicine",
+      "Corporation"
+    ]
+  },
+  "Future Tech": {
+    "provides": [
+      "More Future Tech"
+    ],
+    "requires": [
+      "Fusion Power"
+    ]
+  },
+  "Fusion Power": {
+    "provides": [
+      "Future Tech"
+    ],
+    "requires": [
+      "Nuclear Power",
+      "Superconductor"
+    ]
+  },
+  "Flight": {
+    "provides": [
+      "Advanced Flight"
+    ],
+    "requires": [
+      "Combustion",
+      "Physics"
+    ]
+  },
+  "Feudalism": {
+    "provides": [
+      "Chivalry"
+    ],
+    "requires": [
+      "Masonry",
+      "Monarchy"
+    ]
+  },
+  "Explosives": {
+    "provides": [
+      "Combustion",
+      "Conscription"
+    ],
+    "requires": [
+      "Gunpowder",
+      "Chemistry"
+    ]
+  },
+  "Engineering": {
+    "provides": [
+      "Electronics",
+      "Invention"
+    ],
+    "requires": [
+      "The Wheel",
+      "Construction"
+    ]
+  },
+  "Electronics": {
+    "provides": [
+      "Computers",
+      "Rocketry",
+      "Nuclear Power"
+    ],
+    "requires": [
+      "Electricity",
+      "Engineering"
+    ]
+  },
+  "Electricity": {
+    "provides": [
+      "Electronics",
+      "Advanced Flight"
+    ],
+    "requires": [
+      "Magnetism",
+      "Metallurgy"
+    ]
+  },
+  "Democracy": {
+    "provides": [
+      "Recycling"
+    ],
+    "requires": [
+      "Philosophy",
+      "Literacy"
+    ]
+  },
+  "Currency": {
+    "provides": [
+      "Trade",
+      "Construction"
+    ],
+    "requires": [
+      "Bronze Working"
+    ]
+  },
+  "Corporation": {
+    "provides": [
+      "Mass Production",
+      "Genetic Engineering",
+      "Refining"
+    ],
+    "requires": [
+      "Banking",
+      "Industrialization"
+    ]
+  },
+  "Construction": {
+    "provides": [
+      "Engineering",
+      "Bridge Building"
+    ],
+    "requires": [
+      "Masonry",
+      "Currency"
+    ]
+  },
+  "Conscription": {
+    "provides": null,
+    "requires": [
+      "Republic",
+      "Explosives"
+    ]
+  },
+  "Computers": {
+    "provides": [
+      "Space Flight",
+      "Robotics"
+    ],
+    "requires": [
+      "Mathematics",
+      "Electronics"
+    ]
+  },
+  "Communism": {
+    "provides": [
+      "Labor Union"
+    ],
+    "requires": [
+      "Philosophy",
+      "Industrialization"
+    ]
+  },
+  "Combustion": {
+    "provides": [
+      "Flight",
+      "Automobile"
+    ],
+    "requires": [
+      "Refining",
+      "Explosives"
+    ]
+  },
+  "Code of Laws": {
+    "provides": [
+      "Monarchy",
+      "Trade",
+      "Literacy",
+      "Republic"
+    ],
+    "requires": [
+      "Alphabet"
+    ]
+  },
+  "Chivalry": {
+    "provides": null,
+    "requires": [
+      "Feudalism",
+      "Horseback Riding"
+    ]
+  },
+  "Chemistry": {
+    "provides": [
+      "Refining",
+      "Nuclear Power"
+    ],
+    "requires": [
+      "University",
+      "Medicine"
+    ]
+  },
+  "Ceremonial Burial": {
+    "provides": [
+      "Monarchy",
+      "Mysticism"
+    ],
+    "requires": null
+  },
+  "Bronze Working": {
+    "provides": [
+      "Currency",
+      "Iron Working"
+    ],
+    "requires": null
+  },
+  "Bridge Building": {
+    "provides": [
+      "Railroad"
+    ],
+    "requires": [
+      "Iron Working",
+      "Construction"
+    ]
+  },
+  "Banking": {
+    "provides": [
+      "Industrialization",
+      "Corporation"
+    ],
+    "requires": [
+      "Trade",
+      "Republic"
+    ]
+  },
+  "Automobile": {
+    "provides": [
+      "Mass Production"
+    ],
+    "requires": [
+      "Combustion",
+      "Steel"
+    ]
+  },
+  "Atomic Theory": {
+    "provides": [
+      "Nuclear Fission"
+    ],
+    "requires": [
+      "Theory of Gravity",
+      "Physics"
+    ]
+  },
+  "Astronomy": {
+    "provides": [
+      "Navigation",
+      "Theory of Gravity"
+    ],
+    "requires": [
+      "Mysticism",
+      "Mathematics"
+    ]
+  },
+  "Alphabet": {
+    "provides": [
+      "Code of Laws",
+      "Map Making",
+      "Mathematics",
+      "Writing"
+    ],
+    "requires": null
+  },
+  "Advanced Flight": {
+    "provides": [
+      "Rocketry"
+    ],
+    "requires": [
+      "Flight",
+      "Electricity"
+    ]
+  }
+}
+#+end_example
+
